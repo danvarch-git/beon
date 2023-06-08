@@ -1,0 +1,210 @@
+{
+	"info": {
+		"_postman_id": "133b33f4-89ab-4ba9-a958-23e9e8715c53",
+		"name": "Live Test",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "27103691",
+		"_collection_link": "https://bold-sunset-945210.postman.co/workspace/New-Team-Workspace~25d51c6c-5f7b-4135-9ef8-e69ad327a560/collection/27103691-133b33f4-89ab-4ba9-a958-23e9e8715c53?action=share&creator=27103691&source=collection_link"
+	},
+	"item": [
+		{
+			"name": "User Creation",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 201\", function () {\r",
+							"    pm.response.to.have.status(201);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Response body validation\", function () {\r",
+							"    var jsonData = pm.response.json();\r",
+							"    pm.expect(jsonData.name).to.eql(pm.variables.get(\"name\"));\r",
+							"    pm.expect(jsonData.job).to.eql(pm.variables.get(\"job\"));\r",
+							"    pm.expect(jsonData.email).to.eql(pm.variables.get(\"email\"));\r",
+							"    pm.expect(jsonData.first_name).to.eql(pm.variables.get(\"first_name\"));\r",
+							"    pm.expect(jsonData.last_name).to.eql(pm.variables.get(\"last_name\"));\r",
+							"    pm.expect(jsonData.avatar).to.eql(pm.variables.get(\"avatar\"));\r",
+							"});\r",
+							"\r",
+							"if (pm.response.code!==201){ //Error handler.\r",
+							"    console.log(\"Error:\"+pm.response.code)\r",
+							"    console.log(\"Error Message:\"+pm.response.status);\r",
+							"    pm.environment.set(\"errorOccurred\", true);\r",
+							"    pm.globals.set(\"ErrorMessage\", \"Error Message \"+pm.response.status+\".\");\r",
+							"    pm.globals.set(\"ErrorCode\", \"Error Code \"+pm.response.code+\".\");\r",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"name\": \"{{name}}\",\r\n    \"job\": \"{{job}}\",\r\n    \"email\": \"{{email}}\",\r\n    \"first_name\":\"{{first_name}}\",\r\n    \"last_name\":\"{{last_name}}\",\r\n    \"avatar\":\"{{avatar}}\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://reqres.in/api/users",
+					"protocol": "https",
+					"host": [
+						"reqres",
+						"in"
+					],
+					"path": [
+						"api",
+						"users"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "userList",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Is Array\", function () {\r",
+							"    const jsonData=pm.response.json().data;\r",
+							"\r",
+							"    pm.expect(Array.isArray(jsonData)).to.eql(true);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Unique fields\", function () {\r",
+							"    var jsonData = pm.response.json().data;\r",
+							"    console.log(jsonData);\r",
+							"    const UniqueValues =jsonData.every(data=>{\r",
+							"        let getArray=JSON.stringify(data)\r",
+							"        let newArray=getArray.split(',');     \r",
+							"        return newArray.length===new Set(newArray).size;//Filter by unique Array fields and compare it against Array length.\r",
+							"    })\r",
+							"    pm.expect(UniqueValues).to.be.true;\r",
+							"});\r",
+							"\r",
+							"const response=pm.response.json().data;\r",
+							"const ids=response.map(data=>data.id);\r",
+							"pm.variables.set(\"ids\", ids );\r",
+							"pm.variables.set(\"UsrsResponse\", response );\r",
+							"\r",
+							"if (pm.response.code!==200){ //Error handler.\r",
+							"    console.log(\"Error:\"+pm.response.code)\r",
+							"    console.log(\"Error Message:\"+pm.response.status);\r",
+							"    pm.environment.set(\"errorOccurred\", true);\r",
+							"    pm.globals.set(\"ErrorMessage\", \"Error Message \"+pm.response.status+\".\");\r",
+							"    pm.globals.set(\"ErrorCode\", \"Error Code \"+pm.response.code+\".\");\r",
+							"}\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://reqres.in/api/users",
+					"protocol": "https",
+					"host": [
+						"reqres",
+						"in"
+					],
+					"path": [
+						"api",
+						"users"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GetByUser",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"let responseIds = pm.variables.get(\"ids\");\r",
+							"let usrsResponse = pm.variables.get(\"UsrsResponse\");\r",
+							"\r",
+							"pm.variables.set('currentId',responseIds.shift());\r",
+							"pm.variables.set('matchData',usrsResponse.shift());\r",
+							"\r",
+							"if(Array.isArray(responseIds) && responseIds.length>0){\r",
+							"    postman.setNextRequest('GetByUser');\r",
+							"}else {\r",
+							"    postman.setNextRequest(null);\r",
+							"}\r",
+							"\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"validate Matching Data\", function () {\r",
+							"    var jsonData = pm.response.json().data;\r",
+							"    pm.expect(jsonData.id).to.eql(pm.variables.get(\"matchData\").id);\r",
+							"    pm.expect(jsonData.email).to.eql(pm.variables.get(\"matchData\").email);\r",
+							"    pm.expect(jsonData.first_name).to.eql(pm.variables.get(\"matchData\").first_name);\r",
+							"    pm.expect(jsonData.last_name).to.eql(pm.variables.get(\"matchData\").last_name);\r",
+							"    pm.expect(jsonData.avatar).to.eql(pm.variables.get(\"matchData\").avatar);\r",
+							"\r",
+							"});\r",
+							"\r",
+							"if (pm.response.code!==200){ //Error handler.\r",
+							"    console.log(\"Error:\"+pm.response.code)\r",
+							"    console.log(\"Error Message:\"+pm.response.status);\r",
+							"    pm.environment.set(\"errorOccurred\", true);\r",
+							"    pm.globals.set(\"ErrorMessage\", \"Error Message \"+pm.response.status+\".\");\r",
+							"    pm.globals.set(\"ErrorCode\", \"Error Code \"+pm.response.code+\".\");\r",
+							"}\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://reqres.in/api/users/{{currentId}}",
+					"protocol": "https",
+					"host": [
+						"reqres",
+						"in"
+					],
+					"path": [
+						"api",
+						"users",
+						"{{currentId}}"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
